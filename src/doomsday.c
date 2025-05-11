@@ -89,7 +89,7 @@ int main(int argc, char* argv[])
   if (is_leap(year) && month == 2) {
     ref = references[1];
     found_ref = 1;
-  } else if (month == 2) {
+  } else if (month == 2 || month == 1) {
     ref = references[0];
     found_ref = 1;
   } else {
@@ -109,7 +109,9 @@ int main(int argc, char* argv[])
   printf("Reference day is %u-%u\n", ref.month, ref.day);
 
   // Use signed int to handle negative shifts
-  int shift = (int)day - (int)ref.day;
+  int shift = 0;
+  if (month == 1) shift = ((int)day - 31) - (int)ref.day;
+  else shift = (int)day - (int)ref.day;
   printf("Need to shift reference day by %d days\n", shift);
 
   // Calculate the new weekday by adding the shift to the doomsday
