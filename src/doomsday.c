@@ -24,6 +24,7 @@ Ref references[] = {
   {.month = 9,  .day = 5},
   {.month = 10, .day = 10},
   {.month = 11, .day = 7},
+  {.month = 12, .day = 12}
 };
 
 char* WEEKDAY[7] = {
@@ -36,15 +37,15 @@ char* WEEKDAY[7] = {
   "SATURDAY"
 };
 
-#define set_anchor(y, ret) \
+#define set_anchor(y, a) \
   do { \
     unsigned int ay = y / 100;  \
     switch(ay) {                \
-    case(18): ret = 5; break; \
-    case(19): ret = 3; break; \
-    case(20): ret = 2; break; \
-    case(21): ret = 0; break; \
-    default: ret = -1; \
+    case(18): a = 5; break; \
+    case(19): a = 3; break; \
+    case(20): a = 2; break; \
+    case(21): a = 0; break; \
+    default: a = -1; \
     } \
   } while(0)
 
@@ -69,36 +70,55 @@ int main(int argc, char* argv[])
     return 3;
   }
 
-  unsigned int shift;
-  set_anchor(year, shift);
-  if (shift < 0) {
-    printf("Unsupported century: %u", year / 100);
+  unsigned int anchor;
+  set_anchor(year, anchor);
+  if (anchor < 0) {
+    printf("Unsupported century: %u\n", year / 100);
     return 4;
   }
+  printf("Anchor is %u and thus %s\n", anchor, WEEKDAY[anchor]);
 
   unsigned int lt = year % 100;
   unsigned int ltq = lt / 12;
   unsigned int ltr = lt % 12;
-  unsigned int ret = (ltq + ltr + (ltr / 4) + shift) % 7;
-  printf("ltq = %u, ltr = %u, ret = %u, shift = %u\n", ltq, ltr, ret, shift);
+  unsigned int doomsday = (ltq + ltr + (ltr / 4) + anchor) % 7;
+  printf("Doomsday is WEEKDAY[%u]: %s\n", doomsday, WEEKDAY[doomsday]);
+  printf("ltq = %u, ltr = %u, doomsday = %u, anchor = %u\n", ltq, ltr, doomsday, anchor);
 
   Ref ref;
-  if (is_leap(year) && month == 2) ref = references[1];
-  else if (month == 2) ref = references[0];
-  else
-    for (size_t i = 2; i < 11; i++)
+  int found_ref = 0;
+  if (is_leap(year) && month == 2) {
+    ref = references[1];
+    found_ref = 1;
+  } else if (month == 2) {
+    ref = references[0];
+    found_ref = 1;
+  } else {
+    for (size_t i = 2; i < 12; i++) {
       if (references[i].month == month) {
         ref = references[i];
+        found_ref = 1;
         break;
       }
-  printf("Reference day is %u-%u\n", ref.month, ref.day);
+    }
+  }
 
-  unsigned int idx = ref.day > ret ? ref.day - ret : ret - ref.day;
-  if (idx > 6) {
-    printf("Invalid doomsday: %u", ret);
+  if (!found_ref) {
+    printf("No reference day found for month %u\n", month);
     return 5;
   }
-  printf("The week day for %s is %s\n", argv[1], WEEKDAY[idx]);
+  printf("Reference day is %u-%u\n", ref.month, ref.day);
+
+  // Use signed int to handle negative shifts
+  int shift = (int)day - (int)ref.day;
+  printf("Need to shift reference day by %d days\n", shift);
+
+  // Calculate the new weekday by adding the shift to the doomsday
+  // and taking modulo 7. For negative shifts, add 7 before modulo
+  int weekday = ((int)doomsday + shift) % 7;
+  while (weekday < 0) weekday += 7;
+
+  printf("The week day for %s is %s\n", argv[1], WEEKDAY[weekday]);
 
   return 0;
 
