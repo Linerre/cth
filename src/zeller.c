@@ -82,7 +82,6 @@ int main(int argc, char* argv[])
     year -= 1;
   }
 
-  // adjust year to be the preivous if month is Jan or Feb
   h = zeller(day, month, year);
 
   printf("The day of the week for %s is: %s\n", argv[1], WEEKDAY[h]);
